@@ -44,6 +44,15 @@ fn read_tsv_by_gisaid_epi_isl(path: &str) -> Result<HashMap<String, TsvEntry>> {
     Ok(entries)
 }
 
+fn parse_csv_boolean(valstr: &str) -> Result<JsonValue> {
+    Ok(match valstr {
+        "true" => true.into(),
+        "false" => false.into(),
+        "" => JsonValue::Null,
+        _=> bail!("invalid value for 'test_boolean_column': {valstr:?}")
+    })
+}
+
 fn main() -> Result<()> {
     let mut args = std::env::args();
     let cmd = args.next().unwrap();
@@ -74,15 +83,8 @@ fn main() -> Result<()> {
                 }
                 used_gisaid_epi_isl.insert(id.to_string());
 
-                let val = &*tsventry.test_boolean_column;
-                let val: JsonValue = match val {
-                    "true" => true.into(),
-                    "false" => false.into(),
-                    "" => JsonValue::Null,
-                    _=> bail!("invalid value for 'test_boolean_column': {val:?}")
-                };
-
-                metadata.insert("test_boolean_column", val);
+                metadata.insert("test_boolean_column",
+                                parse_csv_boolean(&tsventry.test_boolean_column)?);
 
                 jsonwriter.write_json(&entry)?;
                 jsonwriter.get_writer().write(b"\n")?;
