@@ -62,9 +62,11 @@ fn main() -> Result<()> {
         dbg!(tsventries.values().filter(|e| e.test_boolean_column == "").count());
 
         dbg!(tsventries.values().filter(|e| {
-            e.test_boolean_column == "false" &&
+            (e.test_boolean_column == "false"
+             || e.test_boolean_column == "")
+                &&
                 (e.pango_lineage == "B.1"
-                    || e.pango_lineage.starts_with("B.1."))
+                 || e.pango_lineage.starts_with("B.1."))
         }).count());
 
         let by_pango_lineage = group_by(
