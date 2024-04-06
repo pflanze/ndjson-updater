@@ -20,8 +20,7 @@ pub enum TempfileError {
 pub fn named_tempfile_for<P: AsRef<Path>>(targetfile: P) -> Result<NamedTempFile, TempfileError> {
     let targetfilepath = targetfile.as_ref();
     let dirpath = targetfilepath.parent().ok_or_else(
-        || TempfileError::MissingDirectory(targetfilepath.to_owned().into()))?
-        .to_owned();
+        || TempfileError::MissingDirectory(targetfilepath.to_owned().into()))?;
     let filename = targetfilepath.file_name().ok_or_else(
         || TempfileError::MissingFilename(targetfilepath.to_owned().into()))?;
     Ok(Builder::new()
