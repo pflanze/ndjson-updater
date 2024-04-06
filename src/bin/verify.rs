@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 use anyhow::{Result, bail};
+use itertools::Itertools;
 use ndjson_updater::groupby::{group_by, print_group_sizes};
 
 #[allow(unused, non_snake_case)]
@@ -81,6 +82,23 @@ fn main() -> Result<()> {
             |e| { &e.pango_lineage },
             |e| { &e.gisaid_epi_isl })?;
         print_group_sizes(&by_pango_lineage);
+
+        // "query": {
+        //   "action": {
+        //     "type": "Details",
+        //     "fields": ["test_boolean_column", "gisaid_epi_isl"],
+        //     "orderByFields": ["gisaid_epi_isl"],
+        //     "limit": 10
+        //   },
+        //   "filterExpression": {
+        //     "type": "True"
+        //   }
+        // },
+        for key in tsventries.keys().sorted().take(10) {
+            let b = &tsventries.get(key).unwrap().test_boolean_column;
+            println!("{{\n  \"gisaid_epi_isl\": {key:?},\n  \"test_boolean_column\": {}\n}},",
+                     if b.is_empty() { "null" } else { b });
+        }
         
     } else {
         bail!("usage: {cmd} tsvpath");
