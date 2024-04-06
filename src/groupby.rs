@@ -26,3 +26,13 @@ pub fn group_by<'k, 'pk, 'v: 'pk, K: Hash + Eq, PK: Hash + Eq + Debug, V>(
     }
     Ok(m)
 }
+
+
+pub fn print_group_sizes<'k, 'pk, 'v: 'pk, K: Hash + Eq + Debug, PK: Hash + Eq + Debug, V>(
+    m: &HashMap<K, HashMap<PK, V>>
+) {
+    for (key, val) in m.iter() {
+        println!("{key:?} => {}", val.len());
+    }
+}
+

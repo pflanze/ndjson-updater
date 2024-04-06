@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 use anyhow::{Result, bail};
-use ndjson_updater::groupby::group_by;
+use ndjson_updater::groupby::{group_by, print_group_sizes};
 
 #[allow(unused, non_snake_case)]
 #[derive(Debug, serde::Deserialize)]
@@ -50,13 +50,29 @@ fn main() -> Result<()> {
     let args: Vec<_> = args.collect();
     if let [tsvpath] = &*args {
         let tsventries = read_tsv_by_gisaid_epi_isl(&tsvpath)?;
-        let grouped = group_by(tsventries.values(),
-                               |e| { &e.test_boolean_column },
-                               |e| { &e.gisaid_epi_isl })?;
-        // dbg!(grouped);
-        for (key, val) in grouped.iter() {
-            println!("{key:?} => {}", val.len());
-        }
+
+        let by_test_boolean_column = group_by(
+            tsventries.values(),
+            |e| { &e.test_boolean_column },
+            |e| { &e.gisaid_epi_isl })?;
+        print_group_sizes(&by_test_boolean_column);
+
+        dbg!(tsventries.values().filter(|e| e.test_boolean_column == "true").count());
+        dbg!(tsventries.values().filter(|e| e.test_boolean_column == "false").count());
+        dbg!(tsventries.values().filter(|e| e.test_boolean_column == "").count());
+
+        dbg!(tsventries.values().filter(|e| {
+            e.test_boolean_column == "false" &&
+                (e.pango_lineage == "B.1"
+                    || e.pango_lineage.starts_with("B.1."))
+        }).count());
+
+        let by_pango_lineage = group_by(
+            tsventries.values(),
+            |e| { &e.pango_lineage },
+            |e| { &e.gisaid_epi_isl })?;
+        print_group_sizes(&by_pango_lineage);
+        
     } else {
         bail!("usage: {cmd} tsvpath");
     }
