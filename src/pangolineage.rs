@@ -11,6 +11,7 @@ use regex::Regex;
 pub trait BaseName {
     fn new(basename: KString) -> Result<Self> where Self: Sized;
     fn as_str(&self) -> &str;
+    fn as_kstring(&self) -> &KString;
     fn to_kstring(&self) -> KString;
     fn into_kstring(self) -> KString;
 }
@@ -25,6 +26,12 @@ lazy_static!{
 #[derive(Debug, PartialEq, Eq)]
 pub struct UndeterminedBaseName(KString);
 
+impl UndeterminedBaseName {
+    pub fn to_haplo_type_base_name(&self) -> HaplotypeBasename {
+        HaplotypeBasename(self.0.clone())
+    }
+}
+
 impl BaseName for UndeterminedBaseName {
     fn new(basename: KString) -> Result<Self> {
         if ! VALID_BASENAME.is_match(&basename) {
@@ -35,6 +42,10 @@ impl BaseName for UndeterminedBaseName {
 
     fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+
+    fn as_kstring(&self) -> &KString {
+        &self.0
     }
 
     fn to_kstring(&self) -> KString {
@@ -58,12 +69,16 @@ impl BaseName for HaplotypeBasename {
         Ok(Self(basename))
     }
 
-    fn to_kstring(&self) -> KString {
-        self.0.clone()
-    }
-
     fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+
+    fn as_kstring(&self) -> &KString {
+        &self.0
+    }
+
+    fn to_kstring(&self) -> KString {
+        self.0.clone()
     }
 
     fn into_kstring(self) -> KString {
@@ -88,12 +103,18 @@ impl BaseName for HaplotypeBasename {
 // }
 
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Subpath(Vec<u16>);
 
 impl Subpath {
     pub fn new(subpath: Vec<u16>) -> Self {
         Self(subpath)
+    }
+
+    pub fn append(&self, further_subpath: &Subpath) -> Self {
+        let mut p = self.0.clone();
+        p.extend_from_slice(&further_subpath.0);
+        Self(p)
     }
 }
 

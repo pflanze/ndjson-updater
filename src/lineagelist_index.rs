@@ -94,4 +94,25 @@ impl LineageAliases {
         }
         Ok(())
     }
+
+    /// Look up a name that might be an alias and return the pango
+    /// lineage path based on the original haplo types that they were
+    /// defined for.
+    pub fn get(&self, key: &UndeterminedBaseName) -> Option<&PangoLineage<HaplotypeBasename>> {
+        self.0.get(key.as_kstring())
+    }
+
+    /// Resolve aliases to the full paths based on the original haplo
+    /// types, i.e. translate e.g. `BA.7` to `B.1.1.529.7`.
+    pub fn canonicalize(
+        &self, inp: &PangoLineage<UndeterminedBaseName>
+    ) -> PangoLineage<HaplotypeBasename> {
+        if let Some(base) = self.get(&inp.0) {
+            PangoLineage::new(inp.0.to_haplo_type_base_name(),
+                              base.1.append(&inp.1))
+        } else {
+            PangoLineage::new(inp.0.to_haplo_type_base_name(),
+                              inp.1.clone())
+        }
+    }
 }
