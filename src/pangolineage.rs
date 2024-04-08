@@ -23,13 +23,10 @@ lazy_static!{
 
 
 /// Could be either an original haplotype, or an alias
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UndeterminedBaseName(KString);
 
 impl UndeterminedBaseName {
-    pub fn to_haplo_type_base_name(&self) -> HaplotypeBasename {
-        HaplotypeBasename(self.0.clone())
-    }
     pub fn into_haplo_type_base_name(self) -> HaplotypeBasename {
         HaplotypeBasename(self.0)
     }
@@ -60,7 +57,7 @@ impl BaseName for UndeterminedBaseName {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HaplotypeBasename(KString);
 
 // stupid copy-paste!
