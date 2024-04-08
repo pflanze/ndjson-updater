@@ -90,22 +90,17 @@ fn main() -> Result<()> {
 
         let is_sublineage_of_b_1 = lineage_is_sublineage_of("B.1")?;
         dbg!(tsventries.values().filter(|e| {
-            e.test_boolean_column == "false"
-                &&
-                is_sublineage_of_b_1(e)
+            e.test_boolean_column == "false" && is_sublineage_of_b_1(e)
         }).count());
+
+        dbg!(tsventries.values().filter(|e| {
+            e.test_boolean_column == "" || is_sublineage_of_b_1(e)
+        }).count());
+        // should give 97
 
         let is_sublineage_of_b_1_1 = lineage_is_sublineage_of("B.1.1")?;
         dbg!(tsventries.values().filter(|e| {
-            let lin = e.pango_lineage.as_str();
-            if lin.is_empty() {
-                eprintln!("tsv entry with empty pango_lineage {e:?}");
-                false
-            } else {
-                e.test_boolean_column == ""
-                    ||
-                    is_sublineage_of_b_1_1(e)
-            }
+            e.test_boolean_column == "" || is_sublineage_of_b_1_1(e)
         }).count());
 
 
