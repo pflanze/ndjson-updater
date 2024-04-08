@@ -108,7 +108,7 @@ impl LineageAliases {
         &self, inp: PangoLineage<UndeterminedBaseName>
     ) -> PangoLineage<HaplotypeBasename> {
         if let Some(base) = self.get(&inp.0) {
-            PangoLineage::new(inp.0.into_haplo_type_base_name(),
+            PangoLineage::new(base.0.clone(),
                               base.1.append(&inp.1))
         } else {
             PangoLineage::new(inp.0.into_haplo_type_base_name(),
