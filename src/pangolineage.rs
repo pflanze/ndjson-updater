@@ -222,7 +222,8 @@ impl TryFrom<&str> for PangoLineage<UndeterminedBaseName> {
 
 impl PangoLineage<HaplotypeBasename> {
     pub fn is_ancestor_of(&self, possible_sublineage: &Self, include_self: bool) -> bool {
-        self.0 == possible_sublineage.0 && self.1.is_ancestor_of(&self.1, include_self)
+        self.0 == possible_sublineage.0
+            && self.1.is_ancestor_of(&possible_sublineage.1, include_self)
     }
 }
 
