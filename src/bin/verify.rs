@@ -1,3 +1,4 @@
+use std::convert::{TryFrom, TryInto};
 use std::{collections::HashMap, io::stdout};
 use std::fmt::Debug;
 use std::fs::File;
@@ -5,6 +6,7 @@ use std::io::BufReader;
 
 use anyhow::{Result, bail};
 use itertools::Itertools;
+use ndjson_updater::pangolineage::PangoLineage;
 use ndjson_updater::{groupby::{group_by, print_group_sizes}, lineagelist_index::LineageAliases};
 
 #[allow(unused, non_snake_case)]
@@ -67,19 +69,25 @@ fn main() -> Result<()> {
         dbg!(tsventries.values().filter(|e| e.test_boolean_column == "false").count());
         dbg!(tsventries.values().filter(|e| e.test_boolean_column == "").count());
 
+        let b1 = lineage_aliases.canonicalize(PangoLineage::try_from("B.1")?);
         dbg!(tsventries.values().filter(|e| {
             (e.test_boolean_column == "false"
              || e.test_boolean_column == "")
                 &&
-                (e.pango_lineage == "B.1"
-                 || e.pango_lineage.starts_with("B.1."))
+                b1.is_ancestor_of(
+                    &lineage_aliases.canonicalize(
+                        e.pango_lineage.as_str().try_into().unwrap()),
+                    true)
         }).count());
 
+        let b11 = lineage_aliases.canonicalize(PangoLineage::try_from("B.1.1")?);
         dbg!(tsventries.values().filter(|e| {
             e.test_boolean_column == ""
                 ||
-                (e.pango_lineage == "B.1.1"
-                 || e.pango_lineage.starts_with("B.1.1."))
+                b11.is_ancestor_of(
+                    &lineage_aliases.canonicalize(
+                        e.pango_lineage.as_str().try_into().unwrap()),
+                    true)
         }).count());
 
         let by_pango_lineage = group_by(
