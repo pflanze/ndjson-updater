@@ -240,6 +240,8 @@ impl PangoLineage<UndeterminedBaseName> {
 mod tests2 {
     use std::convert::TryInto;
 
+    use itertools::Itertools;
+
     use super::*;
 
     #[test]
@@ -251,5 +253,54 @@ mod tests2 {
         let l : PangoLineage<UndeterminedBaseName> = "DV.7.1.2".try_into().unwrap();
         assert_eq!(l.0.as_str(), "DV");
         assert_eq!(l.1.as_ref(), &[7u16, 1, 2]);
+    }
+
+    #[test]
+    fn t_ancestry() {
+        let lineages =
+            ["A.1", "B", "B.1", "B.2", "B.1.2"]
+            .map(|s| -> PangoLineage<UndeterminedBaseName> { s.try_into().unwrap()});
+        let lineages = lineages.map(|l| l.force_into_canonicalization());
+        for (a, b) in 
+            lineages.iter().cartesian_product(lineages.iter())
+            .map(|(a, b)| {
+                (a.to_string(),
+                 b.to_string(),
+                 a.is_ancestor_of(&b, true))
+            }).zip(&[
+                ("A.1", "A.1", true),
+                ("A.1", "B", false),
+                ("A.1", "B.1", false),
+                ("A.1", "B.2", false),
+                ("A.1", "B.1.2", false),
+
+                ("B", "A.1", false),
+                ("B", "B", true),
+                ("B", "B.1", true),
+                ("B", "B.2", true),
+                ("B", "B.1.2", true),
+
+                ("B.1", "A.1", false),
+                ("B.1", "B", false),
+                ("B.1", "B.1", true),
+                ("B.1", "B.2", false),
+                ("B.1", "B.1.2", true),
+
+                ("B.2", "A.1", false),
+                ("B.2", "B", false),
+                ("B.2", "B.1", false),
+                ("B.2", "B.2", true),
+                ("B.2", "B.1.2", false),
+
+                ("B.1.2", "A.1", false),
+                ("B.1.2", "B", false),
+                ("B.1.2", "B.1", false),
+                ("B.1.2", "B.2", false),
+                ("B.1.2", "B.1.2", true),
+            ])
+        {
+            let a2: (&str, &str, bool) = (a.0.as_str(), a.1.as_str(), a.2);
+            assert_eq!(a2, *b);
+        }
     }
 }
