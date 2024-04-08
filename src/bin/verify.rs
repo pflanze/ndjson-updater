@@ -69,18 +69,31 @@ fn main() -> Result<()> {
         dbg!(tsventries.values().filter(|e| e.test_boolean_column == "false").count());
         dbg!(tsventries.values().filter(|e| e.test_boolean_column == "").count());
 
-        let b1 = lineage_aliases.canonicalize(PangoLineage::try_from("B.1")?);
+        let lineage_is_sublineage_of = |lin: &str| -> Result<_> {
+            let ancestor = lineage_aliases.canonicalize(PangoLineage::try_from(lin)?);
+            let lineage_aliases = &lineage_aliases;
+            Ok(move |e: &TsvEntry| {
+                let lin = e.pango_lineage.as_str();
+                if lin.is_empty() {
+                    eprintln!("tsv entry with empty pango_lineage {e:?}");
+                    false
+                } else {
+                    ancestor.is_ancestor_of(
+                        &lineage_aliases.canonicalize(lin.try_into().unwrap()),
+                        true)
+                }
+            })
+        };
+
+        let is_sublineage_of_b_1 = lineage_is_sublineage_of("B.1")?;
         dbg!(tsventries.values().filter(|e| {
             (e.test_boolean_column == "false"
              || e.test_boolean_column == "")
                 &&
-                b1.is_ancestor_of(
-                    &lineage_aliases.canonicalize(
-                        e.pango_lineage.as_str().try_into().unwrap()),
-                    true)
+                is_sublineage_of_b_1(e)
         }).count());
 
-        let b11 = lineage_aliases.canonicalize(PangoLineage::try_from("B.1.1")?);
+        let is_sublineage_of_b_1_1 = lineage_is_sublineage_of("B.1.1")?;
         dbg!(tsventries.values().filter(|e| {
             let lin = e.pango_lineage.as_str();
             if lin.is_empty() {
@@ -89,10 +102,7 @@ fn main() -> Result<()> {
             } else {
                 e.test_boolean_column == ""
                     ||
-                    b11.is_ancestor_of(
-                        &lineage_aliases.canonicalize(
-                            lin.try_into().unwrap()),
-                        true)
+                    is_sublineage_of_b_1_1(e)
             }
         }).count());
 
