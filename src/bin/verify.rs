@@ -82,12 +82,18 @@ fn main() -> Result<()> {
 
         let b11 = lineage_aliases.canonicalize(PangoLineage::try_from("B.1.1")?);
         dbg!(tsventries.values().filter(|e| {
-            e.test_boolean_column == ""
-                ||
-                b11.is_ancestor_of(
-                    &lineage_aliases.canonicalize(
-                        e.pango_lineage.as_str().try_into().unwrap()),
-                    true)
+            let lin = e.pango_lineage.as_str();
+            if lin.is_empty() {
+                eprintln!("tsv entry with empty pango_lineage {e:?}");
+                false
+            } else {
+                e.test_boolean_column == ""
+                    ||
+                    b11.is_ancestor_of(
+                        &lineage_aliases.canonicalize(
+                            lin.try_into().unwrap()),
+                        true)
+            }
         }).count());
 
         let by_pango_lineage = group_by(
