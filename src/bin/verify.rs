@@ -71,7 +71,7 @@ fn main() -> Result<()> {
 
         let lineage_is_sublineage_of = |lin: &str| -> Result<_> {
             let ancestor = lineage_aliases.canonicalize(PangoLineage::try_from(lin)?);
-            dbg!(&ancestor);
+            // dbg!(&ancestor);
             let lineage_aliases = &lineage_aliases;
             Ok(move |e: &&TsvEntry| {
                 let lin = e.pango_lineage.as_str();
@@ -80,9 +80,9 @@ fn main() -> Result<()> {
                     false
                 } else {
                     let lin = lin.try_into().unwrap();
-                    dbg!(&lin);
+                    // dbg!(&lin);
                     let lincan = lineage_aliases.canonicalize(lin);
-                    dbg!(&lincan);
+                    // dbg!(&lincan);
                     ancestor.is_ancestor_of(&lincan, true)
                 }
             })
