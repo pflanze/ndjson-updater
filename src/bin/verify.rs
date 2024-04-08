@@ -72,7 +72,7 @@ fn main() -> Result<()> {
         let lineage_is_sublineage_of = |lin: &str| -> Result<_> {
             let ancestor = lineage_aliases.canonicalize(PangoLineage::try_from(lin)?);
             let lineage_aliases = &lineage_aliases;
-            Ok(move |e: &TsvEntry| {
+            Ok(move |e: &&TsvEntry| {
                 let lin = e.pango_lineage.as_str();
                 if lin.is_empty() {
                     eprintln!("tsv entry with empty pango_lineage {e:?}");
@@ -106,11 +106,60 @@ fn main() -> Result<()> {
             }
         }).count());
 
-        let by_pango_lineage = group_by(
-            tsventries.values(),
-            |e| { &e.pango_lineage },
-            |e| { &e.gisaid_epi_isl })?;
-        print_group_sizes(&by_pango_lineage);
+
+        // {
+        //   "testCaseName": "pango lineage B.1.1.7 including sublineages",
+        //   "query": {
+        //     "action": {
+        //       "type": "Aggregated"
+        //     },
+        //     "filterExpression": {
+        //       "type": "PangoLineage",
+        //       "column": "pango_lineage",
+        //       "value": "B.1.1.7",
+        //       "includeSublineages": true
+        //     }
+        //   },
+        //   "expectedQueryResult": [
+        //     {
+        //       "count": 51
+        //     }
+        //   ]
+        // }
+        dbg!(tsventries.values().filter(lineage_is_sublineage_of("B.1.1.7")?).count());
+        // count() = 86
+
+        // {
+        //     "action": {
+        //       "type": "Details",
+        //       "fields": ["pango_lineage"],
+        //       "orderByFields": [
+        //         {
+        //           "field": "pango_lineage",
+        //           "order": "ascending"
+        //         }
+        //       ]
+        //     },
+        //     "filterExpression": {
+        //       "type": "PangoLineage",
+        //       "column": "pango_lineage",
+        //       "value": "B.1.1",
+        //       "includeSublineages": true
+        //     }
+        // }
+        dbg!(tsventries.values()
+             .filter(lineage_is_sublineage_of("B.1.1")?)
+             .map(|e| &e.pango_lineage)
+             .sorted()
+             .collect::<Vec<_>>());
+
+        if false {
+            let by_pango_lineage = group_by(
+                tsventries.values(),
+                |e| { &e.pango_lineage },
+                |e| { &e.gisaid_epi_isl })?;
+            print_group_sizes(&by_pango_lineage);
+        }
 
         // "query": {
         //   "action": {
@@ -123,10 +172,12 @@ fn main() -> Result<()> {
         //     "type": "True"
         //   }
         // },
-        for key in tsventries.keys().sorted().take(10) {
-            let b = &tsventries.get(key).unwrap().test_boolean_column;
-            println!("{{\n  \"gisaid_epi_isl\": {key:?},\n  \"test_boolean_column\": {}\n}},",
-                     if b.is_empty() { "null" } else { b });
+        if false {
+            for key in tsventries.keys().sorted().take(10) {
+                let b = &tsventries.get(key).unwrap().test_boolean_column;
+                println!("{{\n  \"gisaid_epi_isl\": {key:?},\n  \"test_boolean_column\": {}\n}},",
+                         if b.is_empty() { "null" } else { b });
+            }
         }
         
     } else {
