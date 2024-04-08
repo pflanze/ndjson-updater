@@ -111,12 +111,67 @@ impl Subpath {
         Self(subpath)
     }
 
-    pub fn append(&self, further_subpath: &Subpath) -> Self {
+    pub fn append(&self, further_subpath: &Self) -> Self {
         let mut p = self.0.clone();
         p.extend_from_slice(&further_subpath.0);
         Self(p)
     }
+
+    pub fn is_ancestor_of(&self, possible_other: &Self, include_self: bool) -> bool {
+        let selflen = self.0.len();
+        if selflen <= possible_other.0.len() && self.0 == &possible_other.0[0..selflen] {
+            // prefix is the same
+            if include_self {
+                true
+            } else {
+                selflen < possible_other.0.len()
+            }
+        } else {
+            false
+        }
+    }
 }
+
+#[cfg(test)]
+mod tests1 {
+    use super::*;
+
+    #[test]
+    fn t_subpath_append() {
+        assert_eq!(
+            Subpath(vec![1, 13, 7]).append(&Subpath(vec![4, 5])),
+            Subpath(vec![1, 13, 7, 4, 5]));
+    }
+
+    #[test]
+    fn t_subpath_ancestor() {
+        assert_eq!(
+            Subpath(vec![1, 13, 7]).is_ancestor_of(&Subpath(vec![4, 5]), true),
+            false);
+        assert_eq!(
+            Subpath(vec![1, 13, 7]).is_ancestor_of(&Subpath(vec![1, 13, 7, 12]), true),
+            true);
+        assert_eq!(
+            Subpath(vec![]).is_ancestor_of(&Subpath(vec![12]), true),
+            true);
+        assert_eq!(
+            Subpath(vec![]).is_ancestor_of(&Subpath(vec![]), true),
+            true);
+        assert_eq!(
+            Subpath(vec![]).is_ancestor_of(&Subpath(vec![]), false),
+            false);
+        assert_eq!(
+            Subpath(vec![1, 13, 7]).is_ancestor_of(&Subpath(vec![1, 13, 6, 12]), true),
+            false);
+        assert_eq!(
+            Subpath(vec![1, 13, 7]).is_ancestor_of(&Subpath(vec![1, 13, 7]), true),
+            true);
+        assert_eq!(
+            Subpath(vec![1, 13, 7]).is_ancestor_of(&Subpath(vec![1, 13, 7]), false),
+            false);
+    }
+}
+
 
 impl std::convert::AsRef<[u16]> for Subpath {
     fn as_ref(&self) -> &[u16] {
@@ -157,9 +212,14 @@ impl<B: BaseName> TryFrom<&str> for PangoLineage<B> {
     }
 }
 
+impl PangoLineage<HaplotypeBasename> {
+    pub fn is_ancestor_of(&self, possible_sublineage: &Self, include_self: bool) -> bool {
+        self.0 == possible_sublineage.0 && self.1.is_ancestor_of(&self.1, include_self)
+    }
+}
 
 #[cfg(test)]
-mod tests {
+mod tests2 {
     use std::convert::TryInto;
 
     use super::*;
