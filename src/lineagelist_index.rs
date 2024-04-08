@@ -2,7 +2,7 @@
 //! https://github.com/cov-lineages/lineages-website/raw/master/_data/lineage_data.full.json
 //! (see https://cov-lineages.org/lineage_list.html)
 
-use std::{collections::HashMap, fs::read_to_string, convert::TryInto, io::Write};
+use std::{collections::HashMap, fs::read_to_string, convert::{TryInto, TryFrom}, io::Write};
 
 use anyhow::{Result, bail};
 use itertools::Itertools;
@@ -52,7 +52,7 @@ impl LineageAliases {
                 let shortened: PangoLineage<UndeterminedBaseName> =
                     lin.lineage.as_str().try_into()?;
                 let canonical: PangoLineage<HaplotypeBasename> =
-                    canonicalstr.try_into()?;
+                    PangoLineage::try_from(canonicalstr)?.force_into_canonicalization();
                 let surplus_path = shortened.1.as_ref();
                 let surplus_len = surplus_path.len();
                 let canonical_fullpath = canonical.1.as_ref();

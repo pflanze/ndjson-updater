@@ -30,6 +30,9 @@ impl UndeterminedBaseName {
     pub fn to_haplo_type_base_name(&self) -> HaplotypeBasename {
         HaplotypeBasename(self.0.clone())
     }
+    pub fn into_haplo_type_base_name(self) -> HaplotypeBasename {
+        HaplotypeBasename(self.0)
+    }
 }
 
 impl BaseName for UndeterminedBaseName {
@@ -198,7 +201,15 @@ impl<B: BaseName> PangoLineage<B> {
     }
 }
 
-impl<B: BaseName> TryFrom<&str> for PangoLineage<B> {
+// impl<B: BaseName> TryFrom<&str> for PangoLineage<B> {
+// No, only implement it for UndeterminedBaseName ones!
+/// `TryFrom<&str>` is only implemented for lineages with undetermined
+/// base name kind, as string representations are normally using
+/// aliases; this prevents user code accidentally choosing
+/// `PangoLineage<HaplotypeBasename>` and over-eagerly satisfy
+/// e.g. `is_ancestor_of` checks (omitting the necessary
+/// `canonicalize` call).
+impl TryFrom<&str> for PangoLineage<UndeterminedBaseName> {
     type Error = anyhow::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
@@ -207,7 +218,7 @@ impl<B: BaseName> TryFrom<&str> for PangoLineage<B> {
         if part0.is_empty() {
             bail!("empty string can't be a base name")
         }
-        Ok(Self(B::new(KString::from_ref(part0))?,
+        Ok(Self(UndeterminedBaseName::new(KString::from_ref(part0))?,
                 Subpath(parts.map(|s| Ok(s.parse()?)).collect::<Result<Vec<_>>>()?)))
     }
 }
@@ -215,6 +226,16 @@ impl<B: BaseName> TryFrom<&str> for PangoLineage<B> {
 impl PangoLineage<HaplotypeBasename> {
     pub fn is_ancestor_of(&self, possible_sublineage: &Self, include_self: bool) -> bool {
         self.0 == possible_sublineage.0 && self.1.is_ancestor_of(&self.1, include_self)
+    }
+}
+
+impl PangoLineage<UndeterminedBaseName> {
+    /// Force conversion into canonical representation without any
+    /// change, i.e. assume that the base name is an original haplo
+    /// type name, not an alias. Be careful to uphold this assumption!
+    pub fn force_into_canonicalization(self) -> PangoLineage<HaplotypeBasename> {
+        let Self(basename, subpath) = self;
+        PangoLineage(basename.into_haplo_type_base_name(), subpath)
     }
 }
 
