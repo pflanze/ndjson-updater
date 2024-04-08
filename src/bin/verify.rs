@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io::stdout};
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::BufReader;
 
 use anyhow::{Result, bail};
 use itertools::Itertools;
-use ndjson_updater::groupby::{group_by, print_group_sizes};
+use ndjson_updater::{groupby::{group_by, print_group_sizes}, lineagelist_index::LineageAliases};
 
 #[allow(unused, non_snake_case)]
 #[derive(Debug, serde::Deserialize)]
@@ -49,8 +49,13 @@ fn main() -> Result<()> {
     let mut args = std::env::args();
     let cmd = args.next().unwrap();
     let args: Vec<_> = args.collect();
-    if let [tsvpath] = &*args {
-        let tsventries = read_tsv_by_gisaid_epi_isl(&tsvpath)?;
+
+    if let [lineage_data_json_path, tsv_path] = &*args {
+
+        let lineage_aliases = LineageAliases::from_file(&lineage_data_json_path)?;
+        // lineage_aliases.print(stdout())?;
+
+        let tsventries = read_tsv_by_gisaid_epi_isl(&tsv_path)?;
 
         let by_test_boolean_column = group_by(
             tsventries.values(),
@@ -101,7 +106,7 @@ fn main() -> Result<()> {
         }
         
     } else {
-        bail!("usage: {cmd} tsvpath");
+        bail!("usage: {cmd} lineage_data_json_path tsv_path");
     }
     
     Ok(())
