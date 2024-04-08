@@ -90,8 +90,7 @@ fn main() -> Result<()> {
 
         let is_sublineage_of_b_1 = lineage_is_sublineage_of("B.1")?;
         dbg!(tsventries.values().filter(|e| {
-            (e.test_boolean_column == "false"
-             || e.test_boolean_column == "")
+            e.test_boolean_column == "false"
                 &&
                 is_sublineage_of_b_1(e)
         }).count());
